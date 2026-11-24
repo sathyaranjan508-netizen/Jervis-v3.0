@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%23000%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%2720%27 fill=%27none%27 stroke=%27%2300e5ff%27 stroke-width=%274%27/%3E%3Ccircle cx=%2732%27 cy=%2732%27 r=%278%27 fill=%27%2300e5ff%27/%3E%3C/svg%3E">
+<title>JARVIS</title>
+<style>
+:root{--c:#00e5ff;--b:#1e6bff;--bg:#000;--p:#06121c;--line:rgba(0,229,255,.22);--tx:#d8f6ff;--dim:#6f9db0;--spd:1;--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+body[data-s=LISTENING]{--spd:2.2}body[data-s=THINKING]{--spd:3.5}body[data-s=SPEAKING]{--spd:1.6}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Roboto,system-ui,sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;padding-top:var(--sat);background:radial-gradient(120% 60% at 50% 30%,#031a26 0,#000 70%)}
+header{display:flex;justify-content:space-between;align-items:center;padding:10px 18px}
+header b{letter-spacing:.35em;color:var(--c);text-shadow:0 0 12px var(--c);font-weight:600}
+#st{font-size:12px;letter-spacing:.2em;display:flex;align-items:center;gap:7px;color:var(--c)}
+#st i{width:8px;height:8px;border-radius:50%;background:var(--c);box-shadow:0 0 10px var(--c);animation:pulse calc(1.6s/var(--spd)) infinite}
+@keyframes pulse{50%{opacity:.25}}
+main{flex:1;position:relative;min-height:0}
+section{position:absolute;inset:0;overflow-y:auto;padding:6px 18px 18px;opacity:0;transform:translateY(14px) scale(.99);pointer-events:none;transition:opacity .3s,transform .3s}
+section.on{opacity:1;transform:none;pointer-events:auto}
+nav{display:flex;border-top:1px solid var(--line);background:rgba(2,10,16,.95);padding-bottom:var(--sab)}
+nav button{flex:1;background:none;border:0;color:var(--dim);padding:13px 0;font-size:13px;letter-spacing:.08em;transition:.25s}
+nav button.on{color:var(--c);text-shadow:0 0 10px var(--c);box-shadow:inset 0 2px 0 var(--c)}
+button{font:inherit;cursor:pointer;transition:transform .15s,box-shadow .25s,background .25s}
+button:active{transform:scale(.93)}
+.btn{background:rgba(0,229,255,.08);border:1px solid var(--line);color:var(--c);border-radius:12px;padding:11px 14px;font-size:14px}
+.btn:hover,.btn:focus-visible{box-shadow:0 0 14px rgba(0,229,255,.45);background:rgba(0,229,255,.16);outline:0}
+.btn.pri{background:linear-gradient(135deg,var(--c),var(--b));color:#001018;border:0;font-weight:600}
+.btn.danger{color:#ff6b7a;border-color:rgba(255,107,122,.35)}
+input,textarea,select{width:100%;background:#020c13;border:1px solid var(--line);color:var(--tx);border-radius:10px;padding:11px;font:inherit;font-size:15px}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--c);box-shadow:0 0 12px rgba(0,229,255,.3)}
+label{display:block;font-size:12px;color:var(--dim);margin:14px 0 5px;letter-spacing:.06em}
+/* home */
+.greet{text-align:center;margin-top:4px}
+.greet h1{font-size:25px;font-weight:300;margin:0;letter-spacing:.04em}
+.clock{font-size:40px;font-weight:200;color:var(--c);text-shadow:0 0 18px rgba(0,229,255,.6);margin-top:2px}
+.date{font-size:13px;color:var(--dim)}
+#reactor{display:block;width:min(74vw,310px);margin:6px auto 0;cursor:pointer;filter:drop-shadow(0 0 22px rgba(0,229,255,.45))}
+#reactor g{transform-origin:150px 150px}
+.r1{animation:spin calc(24s/var(--spd)) linear infinite}.r2{animation:spin calc(14s/var(--spd)) linear infinite reverse}.r3{animation:spin calc(8s/var(--spd)) linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.core{animation:core calc(3s/var(--spd)) ease-in-out infinite;transform-origin:150px 150px}
+@keyframes core{50%{transform:scale(1.07);opacity:.8}}
+canvas.wave{width:100%;height:52px;display:block}
+.qa{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.recent{border:1px solid var(--line);background:rgba(0,229,255,.04);border-radius:14px;padding:12px;font-size:14px;cursor:pointer}
+.recent small{color:var(--dim);display:block;margin-bottom:6px;letter-spacing:.08em}
+.recent p{margin:3px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.warn{border:1px solid rgba(255,190,60,.4);color:#ffcf6b;border-radius:12px;padding:10px;font-size:13px;margin-bottom:8px;display:none}
+/* chat */
+#chat{display:flex;flex-direction:column;padding:0}
+.bar{display:flex;gap:8px;padding:6px 14px;overflow-x:auto}
+.bar .btn{padding:8px 12px;font-size:13px;white-space:nowrap}
+#msgs{flex:1;overflow-y:auto;padding:6px 14px}
+.m{max-width:88%;margin:10px 0;padding:10px 13px;border-radius:14px;font-size:15px;line-height:1.5;word-wrap:break-word;animation:pop .25s}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+.m.user{margin-left:auto;background:linear-gradient(135deg,rgba(30,107,255,.45),rgba(0,229,255,.22));border:1px solid var(--line)}
+.m.ai{background:rgba(0,229,255,.06);border:1px solid var(--line)}
+.m pre{background:#020a10;border:1px solid var(--line);border-radius:8px;padding:9px;overflow-x:auto;font-size:13px}
+.m code{background:rgba(0,229,255,.12);padding:1px 5px;border-radius:5px;font-size:13px}.m pre code{background:none;padding:0}
+.m h4{margin:8px 0 4px;color:var(--c)}.m ul{margin:6px 0;padding-left:20px}.m a{color:var(--c)}
+.m.err{border-color:rgba(255,107,122,.5)}
+.act{display:flex;gap:12px;margin-top:6px}.act button{background:none;border:0;color:var(--dim);font-size:12px;padding:2px 0}.act button:hover{color:var(--c)}
+.dots span{display:inline-block;width:7px;height:7px;margin:0 2px;background:var(--c);border-radius:50%;animation:dot 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes dot{50%{transform:translateY(-6px);opacity:.4}}
+.composer{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+.composer input{flex:1}.composer .btn{padding:0 14px}
+#mic.live{background:var(--c);color:#001018;box-shadow:0 0 18px var(--c)}
+/* drawer & toast */
+#drawer{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;z-index:20}
+#drawer.on{display:block}
+#drawer div.pn{position:absolute;left:0;top:0;bottom:0;width:82%;max-width:340px;background:#030f17;border-right:1px solid var(--line);padding:calc(var(--sat) + 14px) 14px;overflow-y:auto}
+.hi{display:flex;align-items:center;gap:8px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;font-size:14px}
+.hi span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#02202c;border:1px solid var(--c);padding:10px 16px;border-radius:20px;font-size:13px;opacity:0;transition:.3s;pointer-events:none;z-index:30;max-width:90%}
+#toast.on{opacity:1}
+/* tools */
+.tabs{display:flex;gap:8px;margin:6px 0 12px}.tabs .btn{flex:1;padding:9px 4px;font-size:13px}.tabs .btn.on{background:var(--c);color:#001018}
+.item{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);border-radius:10px;margin-top:8px;font-size:14px}
+.item span{flex:1;white-space:pre-wrap;word-break:break-word}.item.done span{text-decoration:line-through;color:var(--dim)}
+.item button{background:none;border:0;color:#ff6b7a;font-size:16px}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.keys .btn{padding:16px 0;font-size:18px}
+#calcOut{font-size:30px;text-align:right;color:var(--c);min-height:42px;margin-top:8px;word-break:break-all}
+.row{display:flex;gap:10px;align-items:center}.row>*{flex:1}
+.sw{display:flex;justify-content:space-between;align-items:center;padding:10px 0}.sw input{width:22px;height:22px;accent-color:var(--c)}
+h3{color:var(--c);font-weight:500;letter-spacing:.08em;margin:22px 0 0;font-size:15px}
+.hidden{display:none!important}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body data-s="ONLINE">
+<div id="app">
+<header><b>J.A.R.V.I.S</b><div id="st"><i></i><span id="stt">ONLINE</span></div></header>
+<main>
+<section id="home" class="on">
+ <div class="greet"><h1 id="greet"></h1><div class="clock" id="clock"></div><div class="date" id="date"></div></div>
+ <svg id="reactor" viewBox="0 0 300 300" role="button" aria-label="Activate voice">
+  <defs><radialGradient id="g"><stop offset="0" stop-color="#bff9ff"/><stop offset=".55" stop-color="#00e5ff"/><stop offset="1" stop-color="#1e6bff" stop-opacity=".1"/></radialGradient></defs>
+  <g class="r1"><circle cx="150" cy="150" r="140" fill="none" stroke="#1e6bff" stroke-opacity=".5" stroke-width="1.5" stroke-dasharray="2 7"/><circle cx="150" cy="150" r="132" fill="none" stroke="#00e5ff" stroke-width="4" stroke-dasharray="120 60 40 90" stroke-linecap="round"/></g>
+  <g class="r2"><circle cx="150" cy="150" r="112" fill="none" stroke="#00e5ff" stroke-opacity=".8" stroke-width="10" stroke-dasharray="3 5"/><circle cx="150" cy="150" r="100" fill="none" stroke="#1e6bff" stroke-width="2"/></g>
+  <g class="r3"><circle cx="150" cy="150" r="86" fill="none" stroke="#00e5ff" stroke-width="6" stroke-dasharray="70 30" stroke-linecap="round"/></g>
+  <circle class="core" cx="150" cy="150" r="64" fill="url(#g)" fill-opacity=".18" stroke="#00e5ff" stroke-width="2.5"/>
+  <text x="150" y="156" text-anchor="middle" fill="#d8f6ff" font-size="17" font-weight="600" letter-spacing="1.5">J.A.R.V.I.S</text>
+ </svg>
+ <canvas class="wave"></canvas>
+ <div class="warn" id="warn">AI brain not configured. Open Settings and add endpoint, key and model.</div>
+ <div class="qa">
+  <button class="btn pri" id="qVoice">Speak</button><button class="btn" id="qNew">New chat</button><button class="btn" id="qNotes">Notes</button>
+  <button class="btn" id="qWeather">Weather</button><button class="btn" id="qTime">Time</button><button class="btn" id="qStop">Stop voice</button>
+ </div>
+ <div class="recent" id="recent"></div>
+</section>
+<section id="chat">
+ <div class="bar"><button class="btn" id="bHist">History</button><button class="btn" id="bNew">New</button><button class="btn" id="bClear">Clear</button><button class="btn danger" id="bDel">Delete</button><button class="btn" id="bMute">Voice on</button></div>
+ <canvas class="wave" style="height:30px"></canvas>
+ <div id="msgs"></div>
+ <div class="composer"><button class="btn" id="mic">Mic</button><input id="inp" placeholder="Ask JARVIS…" enterkeyhint="send" autocomplete="off"><button class="btn pri" id="send">Send</button></div>
+</section>
+<section id="tools">
+ <div class="tabs"><button class="btn on" data-t="notes">Notes</button><button class="btn" data-t="todo">To-do</button><button class="btn" data-t="rem">Reminders</button><button class="btn" data-t="calc">Calc</button></div>
+ <div id="t-notes"><textarea id="nIn" rows="3" placeholder="Write a note"></textarea><button class="btn pri" id="nAdd" style="margin-top:8px;width:100%">Save note</button><div id="nList"></div></div>
+ <div id="t-todo" class="hidden"><div class="row"><input id="tIn" placeholder="New task" style="flex:3"><button class="btn pri" id="tAdd">Add</button></div><div id="tList"></div></div>
+ <div id="t-rem" class="hidden"><input id="rIn" placeholder="Remind me to…"><input id="rAt" type="datetime-local" style="margin-top:8px"><button class="btn pri" id="rAdd" style="margin-top:8px;width:100%">Set reminder</button><div id="rList"></div></div>
+ <div id="t-calc" class="hidden"><div id="calcOut">0</div><div class="keys" id="keys"></div></div>
+</section>
+<section id="settings">
+ <h3>AI brain</h3>
+ <label>API endpoint (chat completions URL)</label><input id="sEnd" placeholder="https://host/v1/chat/completions" autocapitalize="off">
+ <label>API key (saved only on this phone)</label><input id="sKey" type="password" autocomplete="off">
+ <label>Model name</label><input id="sMod" autocapitalize="off">
+ <div class="row" style="margin-top:12px"><button class="btn pri" id="sSave">Save</button><button class="btn" id="sTest">Test connection</button></div>
+ <button class="btn danger" id="sClearKey" style="width:100%;margin-top:8px">Remove saved key</button>
+ <h3>Voice and language</h3>
+ <label>Language</label><select id="sLang"><option value="auto">Auto (Tamil, English, Tanglish)</option><option value="en">English</option><option value="ta">தமிழ் (Tamil)</option><option value="tl">Tanglish</option></select>
+ <label>AI voice</label><select id="sVoice"></select>
+ <label>Speed <span id="vR"></span></label><input id="sRate" type="range" min=".5" max="1.6" step=".05">
+ <label>Pitch <span id="vP"></span></label><input id="sPitch" type="range" min=".1" max="1.5" step=".05">
+ <label>ElevenLabs API key (optional, replaces phone voice)</label><input id="elK" type="password" autocomplete="off" autocapitalize="off">
+ <label>ElevenLabs voice ID</label><input id="elV" autocapitalize="off">
+ <label>ElevenLabs model</label><input id="elM" autocapitalize="off">
+ <button class="btn" id="sPrev" style="margin-top:10px;width:100%">Preview voice</button>
+ <div class="sw"><span>Voice output</span><input type="checkbox" id="sSpeak"></div>
+ <div class="sw"><span>Sound effects</span><input type="checkbox" id="sSfx"></div>
+ <div class="sw"><span>Wake word “Jarvis” (while app is open)</span><input type="checkbox" id="sWake"></div>
+ <h3>Privacy</h3>
+ <div class="sw"><span>Save chat history on this device</span><input type="checkbox" id="sHist"></div>
+ <button class="btn danger" id="sWipe" style="width:100%">Erase all local data</button>
+ <p style="font-size:12px;color:var(--dim);line-height:1.5">Chats, notes, tasks and your API key stay on this phone. Messages go directly from this app to the AI provider you configured, and nowhere else.</p>
+</section>
+</main>
+<nav><button class="on" data-v="home">Home</button><button data-v="chat">Chat</button><button data-v="tools">Tools</button><button data-v="settings">Settings</button></nav>
+</div>
+<div id="drawer"><div class="pn"><button class="btn" id="dClose" style="width:100%;margin-bottom:12px">Close</button><div id="hList"></div></div></div>
+<div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const LS={get:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+let S={lang:'auto',rate:.95,pitch:.6,voice:'',sfx:true,speak:true,wake:false,hist:true,endpoint:'',key:'',model:'',elKey:'',elVoice:'',elModel:'eleven_multilingual_v2',...LS.get('settings',{})};
+let chats=LS.get('chats',[]),cur=null,notes=LS.get('notes',[]),todos=LS.get('todos',[]),rems=LS.get('rems',[]);
+let status='ONLINE',busy=false,ctrl=null,rec=null,wakeRec=null,configured=false;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const saveS=()=>LS.set('settings',S);
+const saveChats=()=>{if(S.hist)LS.set('chats',chats)};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+function setStatus(s){status=s;document.body.dataset.s=s;$('#stt').textContent=s}
+
+/* ---------- navigation ---------- */
+function show(v){$$('main>section').forEach(s=>s.classList.toggle('on',s.id===v));$$('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));if(v==='chat')renderChat(true);if(v==='home')renderRecent()}
+$$('nav button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+
+/* ---------- clock ---------- */
+function tick(){const d=new Date(),h=d.getHours();$('#greet').textContent=`Good ${h<12?'Morning':h<17?'Afternoon':'Evening'}, Sir.`;
+$('#clock').textContent=d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});$('#date').textContent=d.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long',year:'numeric'})}
+setInterval(tick,1000);tick();
+
+/* ---------- waveform ---------- */
+const waves=$$('canvas.wave');let ph=0;
+function drawWaves(){ph+=.15;const amp=status==='SPEAKING'?1:status==='LISTENING'?.45:status==='THINKING'?.2:.04;
+for(const c of waves){const w=c.width=c.clientWidth*devicePixelRatio,h=c.height=c.clientHeight*devicePixelRatio;if(!w)continue;const x=c.getContext('2d');x.clearRect(0,0,w,h);
+const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'#1e6bff');g.addColorStop(.5,'#00e5ff');g.addColorStop(1,'#1e6bff');x.fillStyle=g;x.shadowColor='#00e5ff';x.shadowBlur=8;
+const n=Math.floor(w/(7*devicePixelRatio));for(let i=0;i<n;i++){const p=i/n,env=Math.sin(Math.PI*p),v=Math.abs(Math.sin(ph+i*.45)*Math.cos(ph*.7+i*.19))*amp*env;const bh=Math.max(2,v*h*.95);x.fillRect(i*w/n,(h-bh)/2,w/n*.55,bh)}}
+requestAnimationFrame(drawWaves)}drawWaves();
+
+/* ---------- audio ---------- */
+let AC;function tone(f1,f2,d=.16){if(!S.sfx)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain();o.frequency.setValueAtTime(f1,AC.currentTime);o.frequency.exponentialRampToValueAtTime(f2,AC.currentTime+d);g.gain.setValueAtTime(.15,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d+.05);o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+d+.05)}catch{}}
+let voices=[];function loadVoices(){voices=speechSynthesis.getVoices();const sel=$('#sVoice');sel.innerHTML='<option value="">Auto (male)</option>'+voices.map(v=>`<option value="${esc(v.name)}">${esc(v.name)} (${v.lang})</option>`).join('');sel.value=S.voice}
+if('speechSynthesis' in window){speechSynthesis.onvoiceschanged=loadVoices;loadVoices()}
+function pickVoice(txt){const ta=/[\u0B80-\u0BFF]/.test(txt)||S.lang==='ta';if(S.voice&&!ta)return voices.find(v=>v.name===S.voice);
+if(ta)return voices.find(v=>/^ta/i.test(v.lang));return voices.find(v=>/en/i.test(v.lang)&&/male|david|daniel|george|alex|ryan|guy|mark/i.test(v.name)&&!/female/i.test(v.name))||voices.find(v=>/^en/i.test(v.lang))}
+let spoken=0;
+let curAudio;
+async function speakEL(clean,id){setStatus('SPEAKING');try{const r=await fetch('https://api.elevenlabs.io/v1/text-to-speech/'+encodeURIComponent(S.elVoice)+'?output_format=mp3_44100_128',{method:'POST',headers:{'xi-api-key':S.elKey,'Content-Type':'application/json'},body:JSON.stringify({text:clean.slice(0,2500),model_id:S.elModel||'eleven_multilingual_v2'})});
+if(!r.ok)throw new Error(r.status);const b=await r.blob();if(id!==spoken)return;const a=new Audio(URL.createObjectURL(b));curAudio=a;a.onended=a.onerror=()=>{if(id===spoken){setStatus('ONLINE');wakeResume()}};await a.play()}catch(e){if(id===spoken){toast('ElevenLabs failed ('+(e.message||'error')+'). Using phone voice.');speak(clean,true,true)}}}
+function speak(text,force,noEL){if(!S.speak&&!force)return setStatus('ONLINE');
+const clean=text.replace(/```[\s\S]*?```/g,' code block ').replace(/[`*#_>\[\]()]|https?:\/\/\S+/g,' ').replace(/\s+/g,' ').trim();if(!clean)return setStatus('ONLINE');
+if(S.elKey&&S.elVoice&&!noEL){spoken++;try{speechSynthesis.cancel()}catch{}if(curAudio){curAudio.pause();curAudio=null}return speakEL(clean,spoken)}const parts=clean.match(/[^.!?।]+[.!?।]*/g)||[clean];const id=++spoken;setStatus('SPEAKING');
+parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p.trim());const v=pickVoice(p);if(v){u.voice=v;u.lang=v.lang}else if(/[\u0B80-\u0BFF]/.test(p))u.lang='ta-IN';u.rate=+S.rate;u.pitch=+S.pitch;
+if(i===parts.length-1)u.onend=u.onerror=()=>{if(id===spoken){setStatus('ONLINE');wakeResume()}};speechSynthesis.speak(u)})}
+function stopSpeak(){spoken++;if(curAudio){curAudio.pause();curAudio=null}try{speechSynthesis.cancel()}catch{}if(status==='SPEAKING')setStatus('ONLINE')}
+
+/* ---------- speech recognition ---------- */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const recLang=()=>S.lang==='ta'?'ta-IN':'en-IN';
+function listen(){if(!SR)return toast('Speech recognition is not supported in this browser');if(rec){rec.stop();return}
+stopSpeak();stopWake();let final='';rec=new SR();rec.lang=recLang();rec.interimResults=true;
+rec.onresult=e=>{let t='';for(const r of e.results)t+=r[0].transcript;$('#inp').value=t;final=t};
+rec.onerror=e=>{if(e.error==='not-allowed')toast('Microphone permission denied. Voice needs HTTPS or localhost.')};
+rec.onend=()=>{rec=null;$('#mic').classList.remove('live');if(!busy)setStatus('ONLINE');if(final.trim()){show('chat');$('#inp').value='';send(final.trim())}else wakeResume()};
+try{rec.start();tone(500,900);setStatus('LISTENING');$('#mic').classList.add('live')}catch{rec=null}}
+function stopWake(){if(wakeRec){const w=wakeRec;wakeRec=null;try{w.stop()}catch{}}}
+function wakeResume(){if(!S.wake||!SR||rec||wakeRec||busy||status!=='ONLINE')return;const w=new SR();wakeRec=w;w.lang='en-IN';w.continuous=true;w.interimResults=true;
+w.onresult=e=>{const t=[...e.results].slice(e.resultIndex).map(r=>r[0].transcript).join(' ');if(/jarvis|ஜார்விஸ்/i.test(t)){stopWake();listen()}};
+w.onend=()=>{if(wakeRec===w){wakeRec=null;setTimeout(wakeResume,600)}};w.onerror=()=>{};try{w.start()}catch{wakeRec=null}}
+
+/* ---------- markdown ---------- */
+function md(s){const bl=[];s=s.replace(/```(\w*)\n?([\s\S]*?)(```|$)/g,(_,l,c)=>{bl.push('<pre><code>'+esc(c)+'</code></pre>');return '\u0000'+(bl.length-1)+'\u0000'});
+s=esc(s).replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>').replace(/(^|[\s(])\*([^*\n]+)\*/g,'$1<i>$2</i>').replace(/^#{1,6}\s+(.+)$\n?/gm,'<h4>$1</h4>')
+.replace(/^\s*[-*]\s+(.+)$/gm,'<li>$1</li>').replace(/(<li>.*<\/li>\n?)+/g,m=>'<ul>'+m.replace(/\n/g,'')+'</ul>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/\n/g,'<br>');
+return s.replace(/\u0000(\d+)\u0000/g,(_,i)=>bl[i])}
+
+/* ---------- chats ---------- */
+function newChat(){cur={id:Date.now(),title:'New chat',messages:[]};chats.unshift(cur);saveChats();renderChat(true);return cur}
+function getChat(){return cur||(cur=chats[0])||newChat()}
+let rq=0;function renderChat(bottom){cancelAnimationFrame(rq);rq=requestAnimationFrame(()=>{const c=getChat(),box=$('#msgs'),near=bottom||box.scrollHeight-box.scrollTop-box.clientHeight<120;
+const last=c.messages.length-1,lastAi=[...c.messages].map(m=>m.role).lastIndexOf('assistant');
+box.innerHTML=c.messages.length?c.messages.map((m,i)=>{if(m.role==='user')return `<div class="m user">${esc(m.content).replace(/\n/g,'<br>')}</div>`;
+const body=m.content?md(m.content):(m.err?'':'<span class="dots"><span></span><span></span><span></span></span>');
+const err=m.err?`<div style="color:#ff6b7a;font-size:13px;margin-top:6px">${esc(m.err)}</div>`:'';
+const act=(!busy||i!==last)?`<div class="act">${m.content?`<button data-a="copy" data-i="${i}">Copy</button><button data-a="say" data-i="${i}">Speak</button>`:''}${m.err?`<button data-a="retry" data-i="${i}">Retry</button>`:i===lastAi?`<button data-a="regen" data-i="${i}">Regenerate</button>`:''}</div>`:'';
+return `<div class="m ai${m.err?' err':''}">${body}${err}${act}</div>`}).join(''):'<p style="text-align:center;color:var(--dim);margin-top:40px">At your service, Sir. Type or tap Mic.</p>';
+if(near)box.scrollTop=box.scrollHeight})}
+$('#msgs').onclick=e=>{const b=e.target.closest('button');if(!b)return;const c=getChat(),i=+b.dataset.i,m=c.messages[i];
+if(b.dataset.a==='copy')navigator.clipboard.writeText(m.content).then(()=>toast('Copied'),()=>toast('Copy failed'));
+if(b.dataset.a==='say')speak(m.content,true);
+if(b.dataset.a==='regen'||b.dataset.a==='retry'){if(busy)return;c.messages.splice(i,1);ask(c,m.ctx)}};
+function renderRecent(){const c=chats.find(x=>x.messages.length),r=$('#recent');
+r.innerHTML=c?`<small>RECENT CONVERSATION</small>`+c.messages.slice(-2).map(m=>`<p><b style="color:var(--c)">${m.role==='user'?'You':'JARVIS'}:</b> ${esc(m.content||'…')}</p>`).join(''):'<small>RECENT CONVERSATION</small><p style="color:var(--dim)">Nothing yet. Say hello, Sir.</p>';
+r.onclick=()=>{if(c)cur=c;show('chat')}}
+function renderHist(){$('#hList').innerHTML=chats.length?chats.map(c=>`<div class="hi"><span data-o="${c.id}">${esc(c.title)}</span><button class="btn danger" data-d="${c.id}" style="padding:6px 10px">Delete</button></div>`).join(''):'<p style="color:var(--dim)">No saved chats.</p>'}
+$('#hList').onclick=e=>{const o=e.target.dataset.o,d=e.target.dataset.d;if(o){cur=chats.find(c=>c.id==o);$('#drawer').classList.remove('on');renderChat(true)}
+if(d){chats=chats.filter(c=>c.id!=d);if(cur&&cur.id==d)cur=null;saveChats();renderHist();renderChat(true);renderRecent()}};
+$('#bHist').onclick=()=>{renderHist();$('#drawer').classList.add('on')};$('#dClose').onclick=()=>$('#drawer').classList.remove('on');
+$('#bNew').onclick=()=>{stopAll();newChat()};
+$('#bClear').onclick=()=>{stopAll();getChat().messages=[];cur.title='New chat';saveChats();renderChat(true)};
+$('#bDel').onclick=()=>{stopAll();chats=chats.filter(c=>c!==cur);cur=null;saveChats();getChat();renderChat(true);toast('Conversation deleted')};
+$('#bMute').onclick=()=>{S.speak=!S.speak;saveS();if(!S.speak)stopSpeak();syncUI()};
+
+/* ---------- local skills ---------- */
+const WC={0:'clear sky',1:'mostly clear',2:'partly cloudy',3:'overcast',45:'fog',48:'fog',51:'light drizzle',53:'drizzle',55:'heavy drizzle',61:'light rain',63:'rain',65:'heavy rain',71:'light snow',73:'snow',75:'heavy snow',80:'rain showers',81:'rain showers',82:'violent showers',95:'thunderstorm',96:'thunderstorm with hail',99:'thunderstorm with hail'};
+async function getWeather(city){let q='q='+encodeURIComponent(city||'');if(!city){const p=await new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(ok,no,{timeout:9000}):no());q=`lat=${p.coords.latitude}&lon=${p.coords.longitude}`}
+const r=await weatherData(q);if(r.error)throw new Error(r.error);const c=r.current,d=r.daily;
+return `Weather in ${r.place}: ${Math.round(c.temperature_2m)}°C (feels ${Math.round(c.apparent_temperature)}°C), ${WC[c.weather_code]||'unsettled'}, humidity ${c.relative_humidity_2m}%, wind ${Math.round(c.wind_speed_10m)} km/h.\nToday: ${Math.round(d.temperature_2m_min[0])}–${Math.round(d.temperature_2m_max[0])}°C, rain chance ${d.precipitation_probability_max[0]}%.\nTomorrow: ${Math.round(d.temperature_2m_min[1])}–${Math.round(d.temperature_2m_max[1])}°C, rain chance ${d.precipitation_probability_max[1]}%.`}
+async function weatherData(qs){const p=new URLSearchParams(qs);let lat=p.get('lat'),lon=p.get('lon'),place=p.get('q');
+if(!lat){const g=await (await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&name='+encodeURIComponent(place||''))).json();if(!g.results?.length)return{error:'City not found'};lat=g.results[0].latitude;lon=g.results[0].longitude;place=g.results[0].name+', '+(g.results[0].country||'')}
+const w=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max&timezone=auto&forecast_days=3`)).json();return{place:place||'your location',current:w.current,daily:w.daily}}
+async function wikiSearch(q){const w=await (await fetch('https://en.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=4&srsearch='+encodeURIComponent(q))).json();
+return (w.query?.search||[]).map(r=>({title:r.title,snippet:r.snippet.replace(/<[^>]+>/g,''),url:'https://en.wikipedia.org/wiki/'+encodeURIComponent(r.title.replace(/ /g,'_'))}))}
+const APPS={youtube:'https://www.youtube.com',whatsapp:'https://wa.me/',maps:'https://maps.google.com',gmail:'mailto:',phone:'tel:',dialer:'tel:',messages:'sms:',google:'https://www.google.com',chrome:'https://www.google.com',spotify:'https://open.spotify.com',instagram:'https://www.instagram.com',facebook:'https://www.facebook.com',telegram:'https://t.me',twitter:'https://x.com','play store':'market://search?q=',settings:'intent://settings#Intent;action=android.settings.SETTINGS;end',camera:'intent://#Intent;action=android.media.action.IMAGE_CAPTURE;end'};
+const U={second:1,sec:1,minute:60,min:60,hour:3600,hr:3600};
+function addRem(text,at){rems.push({id:Date.now()+Math.random(),text,at,done:false});LS.set('rems',rems);if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();renderTools()}
+async function local(t){let m;
+if(/\b(what('?s| is)?( the)?( current)? (time|date|day)|time now|date today|current time)\b/i.test(t)){const d=new Date();return `It is ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} on ${d.toLocaleDateString([],{weekday:'long',day:'numeric',month:'long',year:'numeric'})}, Sir.`}
+if(m=t.match(/^(?:calc(?:ulate)?|compute)\s+(.+)/i)){const ex=m[1].replace(/[x×]/gi,'*').replace(/÷/g,'/').replace(/\^/g,'**').replace(/,/g,'');
+if(!/^[\d+\-*/%().\s]+$/.test(ex))return 'That expression has unsupported characters, Sir.';try{const v=Function('"use strict";return ('+ex+')')();return `${m[1]} = ${+v.toFixed(10)}`}catch{return 'I could not evaluate that expression.'}}
+if(m=t.match(/\bweather(?:\s+(?:in|at|for))?\s*(.*)$/i)){try{return await getWeather(m[1].replace(/[?.]/g,'').trim())}catch(e){return 'Weather unavailable: '+(e.message||'location access denied. Say a city name, for example weather in Chennai.')}}
+if(m=t.match(/^open\s+(.+)/i)){const k=m[1].toLowerCase().trim().replace(/ app$/,'');if(APPS[k]){setTimeout(()=>location.href=APPS[k],700);return `Opening ${k}, Sir.`}return `I have no shortcut for “${k}”. Available: ${Object.keys(APPS).join(', ')}.`}
+{const a=t.match(/remind me in (\d+)\s*(second|sec|minute|min|hour|hr)s?\s*(?:to\s+)?(.+)/i),b=t.match(/remind me to (.+?) in (\d+)\s*(second|sec|minute|min|hour|hr)s?/i);
+const r=a?{n:a[1],u:a[2],x:a[3]}:b?{n:b[2],u:b[3],x:b[1]}:null;if(r){addRem(r.x,Date.now()+r.n*U[r.u.toLowerCase()]*1000);return `Reminder set: “${r.x}” in ${r.n} ${r.u}(s), Sir.`}}
+if(m=t.match(/^(?:add )?note[:\s]+(.+)/i)){notes.unshift({id:Date.now(),text:m[1]});LS.set('notes',notes);renderTools();return 'Note saved, Sir.'}
+if(m=t.match(/^(?:add )?(?:todo|task|to-do)[:\s]+(.+)/i)){todos.push({id:Date.now(),text:m[1],done:false});LS.set('todos',todos);renderTools();return 'Task added, Sir.'}
+if(m=t.match(/^(?:search|google|look up|web search)(?: for)?\s+(.+)/i)){try{const r=await wikiSearch(m[1]);
+if(!r.length)return 'The search returned nothing, Sir.';return {ctx:`Web search results for “${m[1]}”. Answer the user using these, mention source names briefly:\n`+r.map((x,i)=>`${i+1}. ${x.title}: ${x.snippet} (${x.url})`).join('\n')}}catch{return 'Web search failed.'}}
+return null}
+
+/* ---------- AI chat ---------- */
+function sysPrompt(){const l={auto:'Reply in the language the user writes in: Tamil, English or Tanglish (Tamil written in English letters). Mirror their style.',en:'Reply in English.',ta:'Reply in Tamil script (தமிழ்).',tl:'Reply in Tanglish (Tamil written in English letters).'}[S.lang];
+return `You are JARVIS, a refined, loyal, slightly witty personal AI assistant. Address the user as "Sir". Be concise and clear, explain difficult topics in simple words with short examples, use Markdown only when it helps. ${l} Current date and time: ${new Date().toString()}.`}
+function stopAll(){if(ctrl)ctrl.abort();stopSpeak();if(rec)rec.abort?.()}
+async function send(text){if(busy||!text)return;const c=getChat();stopSpeak();c.messages.push({role:'user',content:text});if(c.title==='New chat')c.title=text.slice(0,40);saveChats();
+let ctx;const l=await local(text);if(typeof l==='string'){c.messages.push({role:'assistant',content:l});saveChats();renderChat(true);speak(l);return}if(l)ctx=l.ctx;
+c.messages.push({role:'assistant',content:'',ctx});renderChat(true);ask(c,ctx,true)}
+async function ask(c,ctx,fresh){if(!fresh)c.messages.push({role:'assistant',content:'',ctx});const m=c.messages[c.messages.length-1];busy=true;stopWake();setStatus('THINKING');renderChat(true);ctrl=new AbortController();
+try{const msgs=[{role:'system',content:sysPrompt()+(ctx?'\n\n'+ctx:'')},...c.messages.slice(0,-1).filter(x=>x.content&&!x.err).slice(-20).map(({role,content})=>({role,content}))];
+if(!S.endpoint||!S.model)throw new Error('Open Settings and add the API endpoint, key and model.');
+const r=await fetch(S.endpoint,{method:'POST',signal:ctrl.signal,headers:{'Content-Type':'application/json',...(S.key?{Authorization:'Bearer '+S.key}:{})},body:JSON.stringify({model:S.model,messages:msgs,stream:true})});
+if(!r.ok){let e=await r.text();try{e=JSON.parse(e).error||e}catch{}throw new Error(typeof e==='string'?e:JSON.stringify(e))}
+if((r.headers.get('content-type')||'').includes('event-stream')){const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+for(;;){const {done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop();
+for(const ln of lines){const s=ln.trim();if(!s.startsWith('data:'))continue;const d=s.slice(5).trim();if(d==='[DONE]')continue;try{const j=JSON.parse(d);m.content+=j.choices?.[0]?.delta?.content||j.choices?.[0]?.message?.content||''}catch{}}renderChat()}}
+else{const j=await r.json();m.content=j.choices?.[0]?.message?.content||j.message?.content||'';if(!m.content)throw new Error('The provider returned an empty reply')}
+}catch(e){if(e.name==='TypeError')m.err='Network or CORS error. Check internet, endpoint URL, or use a provider that allows browser access.';else if(e.name!=='AbortError')m.err=e.message||'Request failed';}
+busy=false;ctrl=null;if(!m.content&&!m.err)c.messages.pop();saveChats();renderChat();renderRecent();
+if(m.content&&!m.err){tone(900,600,.12);speak(m.content)}else{setStatus('ONLINE');wakeResume()}}
+$('#send').onclick=()=>{if(busy){stopAll();return}const v=$('#inp').value.trim();if(v){$('#inp').value='';send(v)}};
+$('#inp').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();$('#send').click()}};
+setInterval(()=>$('#send').textContent=busy?'Stop':'Send',250);
+$('#mic').onclick=listen;
+
+/* ---------- quick actions ---------- */
+$('#reactor').onclick=$('#qVoice').onclick=()=>{show('chat');listen()};
+$('#qNew').onclick=()=>{newChat();show('chat')};
+$('#qNotes').onclick=()=>{show('tools');tab('notes')};
+$('#qWeather').onclick=()=>{show('chat');send('weather')};
+$('#qTime').onclick=()=>{show('chat');send('what is the time')};
+$('#qStop').onclick=()=>{stopAll();toast('Voice stopped')};
+
+/* ---------- tools ---------- */
+function tab(t){$$('.tabs .btn').forEach(b=>b.classList.toggle('on',b.dataset.t===t));['notes','todo','rem','calc'].forEach(x=>$('#t-'+x).classList.toggle('hidden',x!==t))}
+$$('.tabs .btn').forEach(b=>b.onclick=()=>tab(b.dataset.t));
+const del=(btn,id)=>`<button data-x="${btn}" data-id="${id}" aria-label="Delete">✕</button>`;
+function renderTools(){$('#nList').innerHTML=notes.map(n=>`<div class="item"><span>${esc(n.text)}</span>${del('n',n.id)}</div>`).join('');
+$('#tList').innerHTML=todos.map(n=>`<div class="item ${n.done?'done':''}"><input type="checkbox" data-x="tt" data-id="${n.id}" ${n.done?'checked':''} style="width:22px;height:22px;accent-color:var(--c)"><span>${esc(n.text)}</span>${del('t',n.id)}</div>`).join('');
+$('#rList').innerHTML=rems.map(n=>`<div class="item ${n.done?'done':''}"><span>${esc(n.text)}<br><small style="color:var(--dim)">${new Date(n.at).toLocaleString()}</small></span>${del('r',n.id)}</div>`).join('')}
+$('#tools').addEventListener('click',e=>{const x=e.target.dataset.x,id=e.target.dataset.id;if(!x)return;
+if(x==='n'){notes=notes.filter(n=>n.id!=id);LS.set('notes',notes)}if(x==='t'){todos=todos.filter(n=>n.id!=id);LS.set('todos',todos)}if(x==='r'){rems=rems.filter(n=>n.id!=id);LS.set('rems',rems)}
+if(x==='tt'){const t=todos.find(n=>n.id==id);t.done=e.target.checked;LS.set('todos',todos)}renderTools()});
+$('#nAdd').onclick=()=>{const v=$('#nIn').value.trim();if(!v)return;notes.unshift({id:Date.now(),text:v});LS.set('notes',notes);$('#nIn').value='';renderTools()};
+$('#tAdd').onclick=()=>{const v=$('#tIn').value.trim();if(!v)return;todos.push({id:Date.now(),text:v,done:false});LS.set('todos',todos);$('#tIn').value='';renderTools()};
+$('#rAdd').onclick=()=>{const v=$('#rIn').value.trim(),a=$('#rAt').value;if(!v||!a)return toast('Enter a reminder and a time');const at=new Date(a).getTime();if(at<=Date.now())return toast('Pick a future time');addRem(v,at);$('#rIn').value='';$('#rAt').value=''};
+setInterval(()=>{let ch=false;for(const r of rems)if(!r.done&&r.at<=Date.now()){r.done=ch=true;tone(700,1200,.3);toast('Reminder: '+r.text);speak('Sir, reminder: '+r.text);
+if('Notification' in window&&Notification.permission==='granted')new Notification('JARVIS reminder',{body:r.text})}if(ch){LS.set('rems',rems);renderTools()}},4000);
+let ce='';const out=()=>$('#calcOut').textContent=ce||'0';
+'C ⌫ % ÷ 7 8 9 × 4 5 6 − 1 2 3 + ( 0 . )  ='.split(/\s+/).forEach(k=>{const b=document.createElement('button');b.className='btn'+(k==='='?' pri':'');b.textContent=k;b.onclick=()=>{
+if(k==='C')ce='';else if(k==='⌫')ce=ce.slice(0,-1);else if(k==='='){try{const ex=ce.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-');if(/^[\d+\-*/%().\s]+$/.test(ex))ce=String(+Function('"use strict";return ('+ex+')')().toFixed(10))}catch{ce='Error'}}else{if(ce==='Error')ce='';ce+=k}out()};$('#keys').appendChild(b)});
+
+/* ---------- settings ---------- */
+function syncUI(){$('#elK').value=S.elKey;$('#elV').value=S.elVoice;$('#elM').value=S.elModel;$('#sEnd').value=S.endpoint;$('#sMod').value=S.model;$('#sKey').placeholder=S.key?'Saved on this phone (leave blank to keep)':'Paste API key';$('#sLang').value=S.lang;$('#sRate').value=S.rate;$('#sPitch').value=S.pitch;$('#vR').textContent=S.rate;$('#vP').textContent=S.pitch;$('#sSpeak').checked=S.speak;$('#sSfx').checked=S.sfx;$('#sWake').checked=S.wake;$('#sHist').checked=S.hist;$('#bMute').textContent=S.speak?'Voice on':'Voice off';$('#sVoice').value=S.voice}
+function loadCfg(){configured=!!(S.endpoint&&S.model);$('#warn').style.display=configured?'none':'block'}
+const bind=(id,k,f=v=>v,ev='onchange')=>{$(id)[ev]=e=>{S[k]=f(e.target.type==='checkbox'?e.target.checked:e.target.value);saveS();syncUI();if(k==='wake')S.wake?wakeResume():stopWake()}};
+bind('#sLang','lang');bind('#sVoice','voice');bind('#sRate','rate',Number,'oninput');bind('#sPitch','pitch',Number,'oninput');bind('#sSpeak','speak');bind('#sSfx','sfx');bind('#sWake','wake');
+$('#sHist').onchange=e=>{S.hist=e.target.checked;saveS();if(S.hist)saveChats();else localStorage.removeItem('chats')};
+$('#elK').oninput=e=>{S.elKey=e.target.value.trim();saveS()};$('#elV').oninput=e=>{S.elVoice=e.target.value.trim();saveS()};$('#elM').oninput=e=>{S.elModel=e.target.value.trim();saveS()};
+$('#sPrev').onclick=()=>speak('At your service, Sir. All systems are online.',true);
+$('#sSave').onclick=()=>{S.endpoint=$('#sEnd').value.trim();S.model=$('#sMod').value.trim();if($('#sKey').value.trim())S.key=$('#sKey').value.trim();$('#sKey').value='';saveS();syncUI();loadCfg();toast('Settings saved')};
+$('#sClearKey').onclick=()=>{S.key='';saveS();syncUI();toast('Key removed')};
+$('#sTest').onclick=async()=>{$('#sSave').onclick();if(!S.endpoint||!S.model)return toast('Enter endpoint and model first');toast('Testing connection…');
+try{const r=await fetch(S.endpoint,{method:'POST',headers:{'Content-Type':'application/json',...(S.key?{Authorization:'Bearer '+S.key}:{})},body:JSON.stringify({model:S.model,messages:[{role:'user',content:'Reply with the single word: ready'}]})});
+if(!r.ok)return toast('Failed ('+r.status+'): '+(await r.text()).slice(0,120));toast('Connection successful')}catch(e){toast('Network or CORS error. Check endpoint URL.')}};
+$('#sWipe').onclick=()=>{if(!confirm('Erase all chats, notes, tasks, reminders and settings on this device?'))return;stopAll();localStorage.clear();location.reload()};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)stopWake();else wakeResume()});
+$$('button').forEach(b=>b.addEventListener('click',()=>tone(1200,1000,.05)));
+syncUI();renderTools();renderRecent();loadCfg();if(S.wake)setTimeout(wakeResume,800);
+</script>
+</body>
+</html>
